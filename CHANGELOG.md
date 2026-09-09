@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.6
+
+- Carrier Lock text now follows the system language. The tweak reuses
+  Apple's own localized `CARRIER_LOCK_UNLOCKED` (and
+  `CARRIER_LOCK_UNLOCKED_DETAILS` when present) strings instead of
+  hardcoded Vietnamese text, so every device language shows its native
+  "No SIM restrictions" wording.
+- Carrier Lock row detection no longer depends on Vietnamese strings; it
+  matches the localized unlocked text.
+
 ## 1.0.5
 
 - Updated the package author and maintainer to **Nam Pank**.

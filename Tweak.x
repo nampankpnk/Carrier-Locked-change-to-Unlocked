@@ -18,12 +18,43 @@ typedef struct {
 static CLTDelegateHooks gAboutControllerHooks;
 static CLTDelegateHooks gAboutDataSourceHooks;
 
+// Returns the GeneralSettingsUI framework bundle once it is loaded. The
+// Carrier Lock row lives in its "General" localization table, and the table
+// already ships Apple's own "No SIM restrictions" string, so the tweak can
+// reuse it instead of hardcoding a translation.
+static NSBundle *CLTGeneralSettingsBundle(void) {
+    static NSBundle *bundle;
+
+    if (bundle == nil) {
+        for (NSBundle *candidate in [NSBundle allFrameworks]) {
+            if ([candidate.bundlePath containsString:@"GeneralSettingsUI.framework"]) {
+                bundle = candidate;
+                break;
+            }
+        }
+    }
+
+    return bundle;
+}
+
+// Apple's localized "No SIM restrictions" text for the current system
+// language. Nil when the framework bundle is not loaded yet.
+static NSString *CLTUnlockedText(void) {
+    NSBundle *bundle = CLTGeneralSettingsBundle();
+    if (bundle == nil) {
+        return nil;
+    }
+
+    return [bundle localizedStringForKey:@"CARRIER_LOCK_UNLOCKED"
+                                   value:nil
+                                   table:@"General"];
+}
+
 static BOOL CLTIsCarrierLockCell(UITableViewCell *cell) {
     if (cell == nil) {
         return NO;
     }
 
-    NSString *title = cell.textLabel.text;
     NSString *detail = cell.detailTextLabel.text;
 
     if (@available(iOS 14.0, *)) {
@@ -32,12 +63,11 @@ static BOOL CLTIsCarrierLockCell(UITableViewCell *cell) {
                 ? (UIListContentConfiguration *)cell.contentConfiguration
                 : nil;
 
-        title = title ?: content.text;
         detail = detail ?: content.secondaryText;
     }
 
-    return [title isEqualToString:@"Khóa mạng"] &&
-           [detail isEqualToString:@"Không giới hạn SIM"];
+    NSString *unlocked = CLTUnlockedText();
+    return unlocked != nil && [detail isEqualToString:unlocked];
 }
 
 static BOOL CLTIsCarrierLockRow(UITableView *tableView, NSIndexPath *indexPath) {
@@ -152,12 +182,21 @@ static void CLTInstallSelectionHooks(id delegate) {
     BOOL isTargetBundle = [bundlePath containsString:@"GeneralSettingsUI.framework"];
 
     if (isTargetTable && isTargetBundle) {
+        // Reuse Apple's own localized unlocked strings so the text follows
+        // the current system language instead of a hardcoded translation.
         if ([key isEqualToString:@"CARRIER_LOCK_LOCKED"]) {
-            return @"Không giới hạn SIM";
+            NSString *unlocked = %orig(@"CARRIER_LOCK_UNLOCKED", nil, tableName);
+            return unlocked != nil ? unlocked : %orig;
         }
 
         if ([key isEqualToString:@"CARRIER_LOCK_LOCKED_DETAILS"]) {
-            return @"Thiết bị này không bị giới hạn SIM và có thể sử dụng với bất kỳ nhà cung cấp mạng nào.";
+            NSString *unlockedDetails = %orig(@"CARRIER_LOCK_UNLOCKED_DETAILS", nil, tableName);
+            if (unlockedDetails != nil) {
+                return unlockedDetails;
+            }
+
+            NSString *unlocked = %orig(@"CARRIER_LOCK_UNLOCKED", nil, tableName);
+            return unlocked != nil ? unlocked : %orig;
         }
     }
 
