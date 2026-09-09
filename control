@@ -1,0 +1,10 @@
+Package: com.pank.carrierlocktext
+Name: Carrier Locked change to Unlocked
+Version: 1.0.5
+Architecture: iphoneos-arm
+Description: A tiny, fun UI tweak that changes "SIM locked" to "No SIM restrictions" in Settings.
+ No magic and no real carrier unlock: it only changes the text and interaction shown in the Settings app. The SIM, baseband and actual carrier-lock state stay exactly the same.
+Maintainer: Nam Pank
+Author: Nam Pank
+Section: Tweaks
+Depends: firmware (>= 15.0), mobilesubstrate

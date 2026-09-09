@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ "$1" = "remove" ] || [ "$1" = "upgrade" ] || [ "$1" = "deconfigure" ]; then
+    /usr/bin/killall -9 Preferences >/dev/null 2>&1 || true
+fi
+
+exit 0
